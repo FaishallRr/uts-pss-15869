@@ -162,3 +162,149 @@ git branch -M main
 git remote add origin https://github.com/USERNAME/REPOSITORY.git
 git push -u origin main
 ```
+
+---
+
+# Minggu 5 — Database & Performance Optimization
+
+Lanjutan Milestone 4: profiling, N+1 query, ORM optimization, EXPLAIN, dan index
+pada project Simple LMS yang sama (tidak ada project baru).
+
+Dependency tambahan (sudah ada di `requirements.txt`):
+
+```
+django-debug-toolbar
+django-redis
+```
+
+Rebuild setelah perubahan dependency:
+
+```powershell
+docker compose build app
+docker compose up -d
+```
+
+Django Debug Toolbar dikonfigurasi di `config/settings.py` (INSTALLED_APPS,
+middleware, `INTERNAL_IPS`) dan `config/urls.py` (`__debug__/` saat `DEBUG`).
+Jika toolbar tidak tampil dari Docker, gunakan `CaptureQueriesContext`
+sebagai bukti benchmark.
+
+## Membuat dataset performa (repeatable)
+
+Dua management command — aman dijalankan berulang (tidak duplikat):
+
+```powershell
+# 10.000 Course PERF00000-PERF09999 (bulk_create, batch 500)
+docker compose exec app python manage.py generate_performance_data
+
+# Relasi: 5 lecturer + 50 student simulasi, 100 course, 1.000 enrollment,
+# 500 lesson, 200 assignment, 1.000 submission
+docker compose exec app python manage.py generate_relationship_data
+```
+
+Verifikasi jumlah data:
+
+```powershell
+docker compose exec app python manage.py shell -c "from catalog.models import Course; print(Course.objects.count())"
+```
+
+## Mengulang benchmark (before vs after)
+
+Selalu pakai dataset & skenario yang sama saat membandingkan.
+
+**1. Baseline (CHECKPOINT 1)**
+
+```python
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from catalog.models import Course
+
+with CaptureQueriesContext(connection) as ctx:
+    rows = list(Course.objects.all())
+print("Jumlah Course:", len(rows), "| Query SQL:", len(ctx.captured_queries))
+```
+
+**2. N+1 Course + Lecturer — BEFORE (101 query) vs AFTER (1 query)**
+
+```python
+import time
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from catalog.models import Course
+
+# BEFORE
+start = time.perf_counter()
+with CaptureQueriesContext(connection) as ctx:
+    result = [(c.title, c.lecturer.username)
+              for c in Course.objects.filter(code__startswith="PERF").order_by("code")[:100]]
+print("BEFORE:", len(ctx.captured_queries), "query,", round(time.perf_counter() - start, 4), "detik")
+
+# AFTER
+start = time.perf_counter()
+with CaptureQueriesContext(connection) as ctx:
+    result = [(c.title, c.lecturer.username)
+              for c in Course.objects.filter(code__startswith="PERF").order_by("code")
+              .select_related("lecturer")[:100]]
+print("AFTER:", len(ctx.captured_queries), "query,", round(time.perf_counter() - start, 4), "detik")
+```
+
+**3. N+1 Course + Lesson — BEFORE (51 query) vs AFTER (2 query)**
+
+```python
+# BEFORE
+with CaptureQueriesContext(connection) as ctx:
+    for course in Course.objects.filter(code__startswith="PERF").order_by("code")[:50]:
+        titles = [l.title for l in course.lessons.all()]
+print("BEFORE:", len(ctx.captured_queries))
+
+# AFTER
+with CaptureQueriesContext(connection) as ctx:
+    for course in Course.objects.filter(code__startswith="PERF").order_by("code")
+            .prefetch_related("lessons")[:50]:
+        titles = [l.title for l in course.lessons.all()]
+print("AFTER:", len(ctx.captured_queries))
+```
+
+**4. EXPLAIN + index**
+
+Index ditambahkan di `catalog/models.py`:
+
+```python
+class Meta:
+    ordering = ["code"]
+    indexes = [
+        models.Index(fields=["is_active", "title"]),
+    ]
+```
+
+```powershell
+docker compose exec app python manage.py makemigrations
+docker compose exec app python manage.py migrate
+```
+
+```python
+from catalog.models import Course
+print(Course.objects.filter(code="PERF05000").explain())                          # Index Scan (unique index code)
+print(Course.objects.filter(is_active=True, title="Performance Course 5000").explain())  # Index Scan (index baru)
+```
+
+Sebelum index: `Seq Scan` (cost ±239) → sesudah index: `Index Scan` (cost ±8).
+Catatan: PostgreSQL tidak selalu memakai index; buktikan lewat hasil `explain()`.
+
+**5. Pastikan test tetap hijau**
+
+```powershell
+docker compose exec app python manage.py test
+```
+
+## Hasil benchmark (contoh, lingkungan Docker)
+
+| Skenario | BEFORE | AFTER |
+|---|---|---|
+| 100 Course + Lecturer | 101 query, 0.0888s | 1 query, 0.0312s (`select_related`) |
+| 50 Course + Lesson | 51 query, 0.0722s | 2 query, 0.0113s (`prefetch_related`) |
+| Query `is_active` + `title` | Seq Scan, cost 239.01 | Index Scan, cost 8.30 |
+
+Query count, execution time, dan plan `explain()` dicatat sebelum dan sesudah
+setiap perubahan — optimasi dinilai dari pengukuran, bukan asumsi.
+
