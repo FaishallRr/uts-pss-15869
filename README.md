@@ -1,54 +1,85 @@
-# Minggu 4 — Simple LMS (Django ORM & Model)
+# UTS Pemrograman Sisi Server — Simple LMS
 
-Praktikum **Pemrograman Sisi Server | Django Framework & ORM** — Modul Praktikum 4.
+Midterm exam (UTS) submission for **Pemrograman Sisi Server (PSS)**.
 
-Proyek "Simple LMS" berisi model `User` (custom, dengan role), `Course`, `Lesson`,
-`Enrollment`, `Assignment`, dan `Submission`, beserta seed idempotent, Django Admin,
-dan unit test.
+A simple Learning Management System (LMS) backend built with **Django + PostgreSQL**,
+fully containerized with **Docker Compose**.
 
-## Persyaratan
+| | |
+|---|---|
+| **Name** | Faishal Rasyid Rusianto |
+| **NIM** | A11.2024.15869 |
+| **Class** | A11.4703 |
+| **Lecturer** | Suprayogi, M.Kom. |
+| **Report** | [Laporan_UTS_PSS_Faishal_15869.pdf](Laporan_UTS_PSS_Faishal_15869.pdf) |
 
-- Windows + VS Code
-- Docker Desktop (Python, Django, dan PostgreSQL berjalan di container — tidak perlu
-  instal Python/PostgreSQL di host)
+## Project History
 
-## Menjalankan (reproduksi)
+This repository grew through the semester:
+
+1. **Week 4 — Django ORM & Models**  
+   Custom `User` model with roles, plus `Course`, `Lesson`, `Enrollment`,
+   `Assignment`, `Submission`. Seed command, admin registration, unit tests.
+2. **Week 5 — Database & Performance Optimization**  
+   N+1 query problem, `select_related`, `prefetch_related`, `QuerySet.explain()`,
+   and index optimization on 10,000+ courses.
+3. **UTS — Exam Evidence**  
+   Real Docker/ORM/optimization experiment outputs, architecture diagram,
+   terminal screenshots, and the full report PDF.
+
+## Features
+
+- Custom user model with role (ADMIN / LECTURER / STUDENT)
+- Course catalog with lecturer (ForeignKey), lessons, enrollments
+- Assignments and student submissions with grades
+- Idempotent seed command (`seed_demo`)
+- Performance dataset generators (10,000 courses)
+- Query optimization scripts with captured evidence (`scripts_uts/`)
+- Unit tests (3 tests, all passing)
+
+## Requirements
+
+- Windows + VS Code (or any OS with Docker)
+- Docker Desktop — Python, Django, and PostgreSQL run inside containers,
+  no need to install them on the host
+
+## How to Run (Reproduce)
 
 ```powershell
+# 1. clone
+git clone https://github.com/FaishallRr/uts-pss-15869.git
+cd uts-pss-15869
+
+# 2. environment file
+copy .env.example .env
+
+# 3. build and start both containers (app + db)
 docker compose build
 docker compose up -d
-docker compose ps
+docker compose ps          # both "app" and "db" should be Up
 
-docker compose exec app python --version
-docker compose exec app python -m django --version
-docker compose exec db psql --version
+# 4. create database tables
+docker compose exec app python manage.py migrate
+
+# 5. seed sample data (safe to run twice)
+docker compose exec app python manage.py seed_demo
+
+# 6. run tests
+docker compose exec app python manage.py test catalog
+
+# 7. open the app
+# http://localhost:8000/admin/  (username: admin)
 ```
 
-Semua perintah Django dijalankan dari container `app`:
+All Django commands run inside the `app` container:
 
 ```powershell
 docker compose exec app python manage.py ...
 ```
 
-## Struktur project
+## Environment Variables
 
-```
-pss-week4-demo/
-├── manage.py
-├── config/          # settings, urls, wsgi/asgi
-├── users/           # custom User (role ADMIN/LECTURER/STUDENT) + CustomUserAdmin
-├── catalog/         # Course, Lesson, Enrollment, Assignment, Submission + admin + seed + tests
-├── requirements.txt
-├── Dockerfile
-├── compose.yaml
-├── .env             # DB_NAME/DB_USER/DB_PASSWORD (tidak di-commit)
-├── .gitignore
-└── .dockerignore
-```
-
-## Konfigurasi
-
-`.env` (development lokal):
+`.env` (not committed, see `.env.example`):
 
 ```
 DB_NAME=lms_db
@@ -56,255 +87,100 @@ DB_USER=lms_user
 DB_PASSWORD=lms_password
 ```
 
-Database PostgreSQL di `config/settings.py` dibaca dari environment (`HOST=db`, `PORT=5432`).
-`AUTH_USER_MODEL = "users.User"` ditetapkan sebelum migration authentication pertama.
+`config/settings.py` reads these from the environment (`HOST=db`, `PORT=5432`).
 
-## Langkah implementasi
+## Project Structure
 
-1. **Fondasi Docker** — `requirements.txt`, `Dockerfile`, `compose.yaml`, `.env`,
-   `.gitignore`, `.dockerignore`; build & verifikasi container.
-2. **Bootstrap project** — `django-admin startproject config .`, `startapp users`,
-   `startapp catalog`; daftarkan app di `INSTALLED_APPS`.
-3. **Custom User** — `users/models.py` (`User(AbstractUser)` + `Role`), lalu
-   `makemigrations` & `migrate`.
-4. **Superuser** — `createsuperuser` (username `admin`), set `role=ADMIN`,
-   `is_staff=True`, `is_superuser=True`.
-5. **Domain LMS** — `catalog/models.py`:
-   - `Course` — `code` unik, FK `lecturer` (`PROTECT`, `related_name="courses_taught"`,
-     `limit_choices_to={"role": "LECTURER"}`)
-   - `Lesson` — FK `course` (`CASCADE`, `related_name="lessons"`), unik per
-     `(course, order)`
-   - `Enrollment` — intermediate model, unik per `(student, course)`
-   - `Assignment` — FK `course` (`related_name="assignments"`)
-   - `Submission` — FK `assignment` + `student`, `grade` decimal
-6. **Django Admin** — registrasi semua model + `CustomUserAdmin` (field `role`).
-7. **QuerySet traversal** — `course.lessons.all()`, `lesson.course`,
-   `select_related("lecturer")`, `prefetch_related("lessons")`.
-8. **Seed idempotent** — management command `seed_demo` (`get_or_create`).
-9. **Testing** — minimal 3 unit test di `catalog/tests.py`.
-
-## Verifikasi
-
-```powershell
-# migration & system check
-docker compose exec app python manage.py makemigrations
-docker compose exec app python manage.py migrate
-docker compose exec app python manage.py showmigrations
-docker compose exec app python manage.py check
-
-# seed sample data (idempotent — aman dijalankan berulang)
-docker compose exec app python manage.py seed_demo
-docker compose exec app python manage.py seed_demo
-
-# unit test (minimal 3 test: unique code, created, relationship)
-docker compose exec app python manage.py test catalog
-
-# Django Admin
-# http://localhost:8000/admin/  (username: admin)
+```
+uts-pss-15869/
+├── manage.py
+├── config/                          # settings, urls, wsgi/asgi
+├── users/                           # custom User (ADMIN/LECTURER/STUDENT) + admin
+├── catalog/                         # Course, Lesson, Enrollment, Assignment, Submission
+│   └── management/commands/
+│       ├── seed_demo.py             # UTS seed data (idempotent)
+│       ├── generate_performance_data.py
+│       └── generate_relationship_data.py
+├── scripts_uts/                     # UTS experiment scripts
+│   ├── q4a_check_data.py            # verify seed data
+│   ├── q4b_queries.py               # 6 ORM queries (Soal 4b)
+│   ├── q5a_before.py                # N+1 without select_related
+│   ├── q5b_after.py                 # 1 query with select_related
+│   ├── q5c_prefetch.py              # prefetch_related comparison
+│   ├── q5d_explain.py               # QuerySet.explain()
+│   ├── generate_images.py           # architecture diagram + screenshots
+│   ├── generate_report.py           # builds the report PDF
+│   └── out/                         # captured real outputs (.txt)
+├── docs/images/                     # arsitektur.png + terminal screenshots
+├── Laporan_UTS_PSS_Faishal_15869.pdf
+├── Dockerfile
+├── compose.yaml
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
-Cek data via shell:
+## ORM Experiments (Soal 4 & 5)
+
+Run these inside Django shell or as scripts:
 
 ```powershell
 docker compose exec app python manage.py shell
 ```
 
 ```python
+# Soal 4b — sample queries
 from catalog.models import Course, Lesson, Assignment, Submission, Enrollment
-Course.objects.count()
-Lesson.objects.count()
-Assignment.objects.count()
-Submission.objects.count()
-Enrollment.objects.count()
+from users.models import User
 
+Course.objects.all().values("code", "title")            # all courses
+dosen = User.objects.get(username="suprayogi")
+Course.objects.filter(lecturer=dosen)                   # courses by lecturer
 course = Course.objects.get(code="PSS01")
-course.lecturer.username
-for lesson in course.lessons.all():
-    print(lesson.order, lesson.title)
-```
-
-Contoh optimasi query (jumlah query turun):
-
-```python
-from django.db import connection, reset_queries
-from catalog.models import Course
-
-reset_queries()
-for c in Course.objects.select_related("lecturer"):
-    print(c.code, c.lecturer.username)
-print(len(connection.queries))  # 1 query (tanpa select_related: 1 + N)
-
-reset_queries()
-for c in Course.objects.prefetch_related("lessons"):
-    for l in c.lessons.all():
-        print("-", l.title)
-print(len(connection.queries))  # konstan, tanpa prefetch: 1 + N
-```
-
-## Data awal
-
-| Username    | Role     | Password |
-|-------------|----------|----------|
-| `admin`     | ADMIN    | dibuat saat `createsuperuser` |
-| `suprayogi` | LECTURER | `12345`  |
-| `fauzan`    | STUDENT  | `12345`  |
-
-> Kredensial di atas hanya untuk development lokal. Jangan commit credential nyata
-> ke repository (`.env` sudah masuk `.gitignore`).
-
-## Git
-
-```powershell
-git status --short
-git add .
-git commit -m "feat: complete week 4 django orm core lms models"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPOSITORY.git
-git push -u origin main
-```
-
----
-
-# Minggu 5 — Database & Performance Optimization
-
-Lanjutan Milestone 4: profiling, N+1 query, ORM optimization, EXPLAIN, dan index
-pada project Simple LMS yang sama (tidak ada project baru).
-
-Dependency tambahan (sudah ada di `requirements.txt`):
-
-```
-django-debug-toolbar
-django-redis
-```
-
-Rebuild setelah perubahan dependency:
-
-```powershell
-docker compose build app
-docker compose up -d
-```
-
-Django Debug Toolbar dikonfigurasi di `config/settings.py` (INSTALLED_APPS,
-middleware, `INTERNAL_IPS`) dan `config/urls.py` (`__debug__/` saat `DEBUG`).
-Jika toolbar tidak tampil dari Docker, gunakan `CaptureQueriesContext`
-sebagai bukti benchmark.
-
-## Membuat dataset performa (repeatable)
-
-Dua management command — aman dijalankan berulang (tidak duplikat):
-
-```powershell
-# 10.000 Course PERF00000-PERF09999 (bulk_create, batch 500)
-docker compose exec app python manage.py generate_performance_data
-
-# Relasi: 5 lecturer + 50 student simulasi, 100 course, 1.000 enrollment,
-# 500 lesson, 200 assignment, 1.000 submission
-docker compose exec app python manage.py generate_relationship_data
-```
-
-Verifikasi jumlah data:
-
-```powershell
-docker compose exec app python manage.py shell -c "from catalog.models import Course; print(Course.objects.count())"
-```
-
-## Mengulang benchmark (before vs after)
-
-Selalu pakai dataset & skenario yang sama saat membandingkan.
-
-**1. Baseline (CHECKPOINT 1)**
-
-```python
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
-from catalog.models import Course
-
-with CaptureQueriesContext(connection) as ctx:
-    rows = list(Course.objects.all())
-print("Jumlah Course:", len(rows), "| Query SQL:", len(ctx.captured_queries))
-```
-
-**2. N+1 Course + Lecturer — BEFORE (101 query) vs AFTER (1 query)**
-
-```python
-import time
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
-from catalog.models import Course
-
-# BEFORE
-start = time.perf_counter()
-with CaptureQueriesContext(connection) as ctx:
-    result = [(c.title, c.lecturer.username)
-              for c in Course.objects.filter(code__startswith="PERF").order_by("code")[:100]]
-print("BEFORE:", len(ctx.captured_queries), "query,", round(time.perf_counter() - start, 4), "detik")
-
-# AFTER
-start = time.perf_counter()
-with CaptureQueriesContext(connection) as ctx:
-    result = [(c.title, c.lecturer.username)
-              for c in Course.objects.filter(code__startswith="PERF").order_by("code")
-              .select_related("lecturer")[:100]]
-print("AFTER:", len(ctx.captured_queries), "query,", round(time.perf_counter() - start, 4), "detik")
-```
-
-**3. N+1 Course + Lesson — BEFORE (51 query) vs AFTER (2 query)**
-
-```python
-# BEFORE
-with CaptureQueriesContext(connection) as ctx:
-    for course in Course.objects.filter(code__startswith="PERF").order_by("code")[:50]:
-        titles = [l.title for l in course.lessons.all()]
-print("BEFORE:", len(ctx.captured_queries))
-
-# AFTER
-with CaptureQueriesContext(connection) as ctx:
-    for course in Course.objects.filter(code__startswith="PERF").order_by("code")
-            .prefetch_related("lessons")[:50]:
-        titles = [l.title for l in course.lessons.all()]
-print("AFTER:", len(ctx.captured_queries))
-```
-
-**4. EXPLAIN + index**
-
-Index ditambahkan di `catalog/models.py`:
-
-```python
-class Meta:
-    ordering = ["code"]
-    indexes = [
-        models.Index(fields=["is_active", "title"]),
-    ]
+Lesson.objects.filter(course=course).order_by("order")  # lessons of a course
+Enrollment.objects.filter(course=course).count()        # students enrolled
+Assignment.objects.filter(course=course)                # assignments
+assignment = Assignment.objects.get(title="Tugas Django ORM")
+Submission.objects.filter(assignment=assignment)        # submissions
 ```
 
 ```powershell
-docker compose exec app python manage.py makemigrations
-docker compose exec app python manage.py migrate
+# Soal 5 — optimization experiments (real captured outputs in scripts_uts/out/)
+docker compose exec app python manage.py shell -c "exec(open('/app/scripts_uts/q5a_before.py').read())"
 ```
 
-```python
-from catalog.models import Course
-print(Course.objects.filter(code="PERF05000").explain())                          # Index Scan (unique index code)
-print(Course.objects.filter(is_active=True, title="Performance Course 5000").explain())  # Index Scan (index baru)
-```
+Or run each script file from `scripts_uts/`. Real outputs:
 
-Sebelum index: `Seq Scan` (cost ±239) → sesudah index: `Index Scan` (cost ±8).
-Catatan: PostgreSQL tidak selalu memakai index; buktikan lewat hasil `explain()`.
+| Script | Result |
+|---|---|
+| `q5a_before.py` | 100 courses, **101 queries**, 0.0881s (N+1 problem) |
+| `q5b_after.py` | 100 courses, **1 query**, 0.0222s (`select_related`) |
+| `q5c_prefetch.py` | **2 queries** with prefetch vs **51 queries** without |
+| `q5d_explain.py` | both queries use **Index Scan** (not Seq Scan) |
 
-**5. Pastikan test tetap hijau**
+## Regenerate Images & Report (host machine)
 
 ```powershell
-docker compose exec app python manage.py test
+pip install pillow fpdf2 pymupdf
+python scripts_uts/generate_images.py      # docs/images/*.png
+python scripts_uts/generate_report.py      # Laporan_UTS_PSS_Faishal_15869.pdf
 ```
 
-## Hasil benchmark (contoh, lingkungan Docker)
+## Seed Data
 
-| Skenario | BEFORE | AFTER |
-|---|---|---|
-| 100 Course + Lecturer | 101 query, 0.0888s | 1 query, 0.0312s (`select_related`) |
-| 50 Course + Lesson | 51 query, 0.0722s | 2 query, 0.0113s (`prefetch_related`) |
-| Query `is_active` + `title` | Seq Scan, cost 239.01 | Index Scan, cost 8.30 |
+| Username | Role | Password | Notes |
+|---|---|---|---|
+| `admin` | ADMIN | set during createsuperuser | Django admin |
+| `suprayogi` | LECTURER | `12345` | teaches PSS01, BD01 |
+| `faishal` | STUDENT | `12345` | enrolled in PSS01 |
+| `ardhi`, `sahal`, `danang`, `candra`, `rangga` | STUDENT | `12345` | enrolled in PSS01 / BD01 |
 
-Query count, execution time, dan plan `explain()` dicatat sebelum dan sesudah
-setiap perubahan — optimasi dinilai dari pengukuran, bukan asumsi.
+Courses: `PSS01` (Pemrograman Sisi Server, 5 lessons), `BD01` (Basis Data, 3 lessons),
+plus 10,000 `PERF*` courses for performance experiments.
 
+> Local development credentials only. Never commit real secrets
+> (`.env` is in `.gitignore`).
+
+## License
+
+For educational purposes (UTS submission).
