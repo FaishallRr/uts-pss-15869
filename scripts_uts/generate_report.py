@@ -548,18 +548,20 @@ Course.objects.filter(is_active=True,
     )
 
     h2(pdf, "5e  Tabel Hasil Eksperimen dan Analisis")
+    para(
+        pdf,
+        "Tabel berikut disusun berdasarkan hasil pengujian nyata (bukan angka perkiraan), mengikuti format contoh pada soal:",
+    )
     data_table(
         pdf,
-        ["Eksperimen", "Jumlah Baris", "Jumlah Query", "Waktu (detik)", "Keterangan"],
+        ["Skenario", "Jumlah Data", "Query Sebelum", "Query Sesudah", "Teknik"],
         [
-            ["5a Course + Lecturer tanpa optimasi", "100", "101", "0.0881", "N+1 (1 + 100)"],
-            ["5b Course + Lecturer + select_related", "100", "1", "0.0222", "JOIN satu query"],
-            ["5c Course + Lesson + prefetch_related", "50", "2", "0.0249", "1 course + 1 batch lesson"],
-            ["5c Course + Lesson tanpa prefetch", "50", "51", "0.0507", "N+1 (1 + 50)"],
-            ["5d Query by code", "1", "1", "-", "Index Scan (code)"],
-            ["5d Query by is_active + title", "1", "1", "-", "Index Scan (composite)"],
+            ["Course + Lecturer", "100 course", "101 query (0.0881s)", "1 query (0.0222s)", "select_related"],
+            ["Course + Lesson", "50 course", "51 query (0.0507s)", "2 query (0.0249s)", "prefetch_related"],
+            ["Query filter code", "10.002 baris", "-", "1 query, Index Scan", "unique index"],
+            ["Query filter is_active+title", "10.002 baris", "-", "1 query, Index Scan", "index composite"],
         ],
-        widths=[62, 24, 24, 26, 42],
+        widths=[42, 26, 38, 38, 26],
     )
     para(
         pdf,
