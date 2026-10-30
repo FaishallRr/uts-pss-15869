@@ -169,26 +169,26 @@ def terminal_shot(txt_name, png_name, command, max_lines=34):
 
 SHOTS = [
     ("q3a_compose_ps.txt", "shot_3a_compose_ps.png",
-     "docker compose ps"),
+     "docker compose ps", 34),
     ("q4a_check_data.txt", "shot_4a_check_data.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 40),
     ("q4b_queries.txt", "shot_4b_queries.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 60),
     ("q5a_before.txt", "shot_5a_before.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 34),
     ("q5b_after.txt", "shot_5b_after.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 34),
     ("q5c_prefetch.txt", "shot_5c_prefetch.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 40),
     ("q5d_explain.txt", "shot_5d_explain.png",
-     "docker compose exec app python manage.py shell"),
+     "docker compose exec app python manage.py shell", 30),
     ("test_catalog.txt", "shot_test_catalog.png",
-     "docker compose exec app python manage.py test catalog"),
+     "docker compose exec app python manage.py test catalog", 30),
 ]
 
 
 if __name__ == "__main__":
     draw_architecture()
-    for txt, png, cmd in SHOTS:
-        terminal_shot(txt, png, cmd)
+    for txt, png, cmd, mx in SHOTS:
+        terminal_shot(txt, png, cmd, max_lines=mx)
     print("Done. Files in", OUT)
