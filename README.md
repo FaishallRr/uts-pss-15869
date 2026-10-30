@@ -11,7 +11,7 @@ fully containerized with **Docker Compose**.
 | **NIM** | A11.2024.15869 |
 | **Class** | A11.4703 |
 | **Lecturer** | Suprayogi, M.Kom. |
-| **Report** | [Laporan_UTS_PSS_Faishal_15869.pdf](Laporan_UTS_PSS_Faishal_15869.pdf) |
+| **Report** | [Laporan_UTS_PSS_Faishal_15869.pdf](Laporan_UTS_PSS_Faishal_15869.pdf) &middot; [DOCX source](Laporan_UTS_PSS_Faishal_15869.docx) |
 
 ## Project History
 
@@ -24,8 +24,7 @@ This repository grew through the semester:
    N+1 query problem, `select_related`, `prefetch_related`, `QuerySet.explain()`,
    and index optimization on 10,000+ courses.
 3. **UTS — Exam Evidence**  
-   Real Docker/ORM/optimization experiment outputs, architecture diagram,
-   terminal screenshots, and the full report PDF.
+   Real Docker/ORM/optimization experiment outputs and the full report PDF.
 
 ## Features
 
@@ -67,8 +66,11 @@ docker compose exec app python manage.py seed_demo
 # 6. run tests
 docker compose exec app python manage.py test catalog
 
-# 7. open the app
-# http://localhost:8000/admin/  (username: admin)
+# 7. create the Django admin account (interactive: username, email, password)
+docker compose exec app python manage.py createsuperuser
+
+# 8. open the app
+# http://localhost:8000/admin/
 ```
 
 All Django commands run inside the `app` container:
@@ -108,11 +110,9 @@ uts-pss-15869/
 │   ├── q5b_after.py                 # 1 query with select_related
 │   ├── q5c_prefetch.py              # prefetch_related comparison
 │   ├── q5d_explain.py               # QuerySet.explain()
-│   ├── generate_images.py           # architecture diagram + screenshots
-│   ├── generate_report.py           # builds the report PDF
 │   └── out/                         # captured real outputs (.txt)
-├── docs/images/                     # arsitektur.png + terminal screenshots
 ├── Laporan_UTS_PSS_Faishal_15869.pdf
+├── Laporan_UTS_PSS_Faishal_15869.docx
 ├── Dockerfile
 ├── compose.yaml
 ├── requirements.txt
@@ -157,14 +157,6 @@ Or run each script file from `scripts_uts/`. Real outputs:
 | `q5b_after.py` | 100 courses, **1 query**, 0.0222s (`select_related`) |
 | `q5c_prefetch.py` | **2 queries** with prefetch vs **51 queries** without |
 | `q5d_explain.py` | both queries use **Index Scan** (not Seq Scan) |
-
-## Regenerate Images & Report (host machine)
-
-```powershell
-pip install pillow fpdf2 pymupdf
-python scripts_uts/generate_images.py      # docs/images/*.png
-python scripts_uts/generate_report.py      # Laporan_UTS_PSS_Faishal_15869.pdf
-```
 
 ## Seed Data
 
