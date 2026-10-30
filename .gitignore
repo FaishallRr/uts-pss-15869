@@ -7,3 +7,6 @@ __pycache__/
 .pytest_cache/ 
 .coverage 
 htmlcov/
+docs/images/
+scripts_uts/generate_images.py
+scripts_uts/generate_report.py
