@@ -1,0 +1,3 @@
+﻿NAME                 IMAGE              COMMAND                  SERVICE   CREATED         STATUS         PORTS
+pss-minggu-4-app-1   pss-minggu-4-app   "python manage.py ruΓÇª"   app       6 minutes ago   Up 6 minutes   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+pss-minggu-4-db-1    postgres:17        "docker-entrypoint.sΓÇª"   db        6 minutes ago   Up 6 minutes   5432/tcp

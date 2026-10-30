@@ -1,0 +1,15 @@
+﻿Found 3 test(s).
+docker : Creating test database for alias 'default'...
+At line:1 char:1
++ docker compose exec app python manage.py test catalog 2>&1 | Out-File ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Creating test d...as 'default'...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+System check identified no issues (0 silenced).
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.558s
+
+OK
+Destroying test database for alias 'default'...

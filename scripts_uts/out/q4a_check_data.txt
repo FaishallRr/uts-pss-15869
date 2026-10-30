@@ -1,0 +1,23 @@
+﻿11 objects imported automatically (use -v 2 for details).
+
+=== CEK DATA UTS SOAL 4a ===
+Dosen (role LECTURER) : 6
+Mahasiswa (STUDENT)   : 56
+Course                : 10002
+  - PSS01 lessons     : 5
+  - BD01 lessons      : 3
+Enrollment            : 1006
+Assignment            : 202
+Submission            : 1002
+
+Daftar Course (kode, judul, dosen):
+  BD01 | Basis Data | dosen: suprayogi
+  PSS01 | Pemrograman Sisi Server | dosen: suprayogi
+
+Daftar Mahasiswa terdaftar (PSS01 & BD01):
+  sahal -> BD01
+  danang -> BD01
+  rangga -> BD01
+  faishal -> PSS01
+  ardhi -> PSS01
+  candra -> PSS01

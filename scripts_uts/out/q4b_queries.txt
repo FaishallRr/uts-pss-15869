@@ -1,0 +1,49 @@
+﻿11 objects imported automatically (use -v 2 for details).
+
+=== SOAL 4b ΓÇö QUERY DJANGO SHELL ===
+
+--- 4b.1 Semua Course beserta kode dan judulnya ---
+  (total Course di database: 10002)
+  10 baris pertama:
+  BD01 | Basis Data
+  PERF00000 | Performance Course 0
+  PERF00001 | Performance Course 1
+  PERF00002 | Performance Course 2
+  PERF00003 | Performance Course 3
+  PERF00004 | Performance Course 4
+  PERF00005 | Performance Course 5
+  PERF00006 | Performance Course 6
+  PERF00007 | Performance Course 7
+  PERF00008 | Performance Course 8
+  ... (output dipotong; total 10.022 course termasuk 10.000 dataset performa)
+
+--- 4b.2 Course yang diampu oleh seorang dosen (suprayogi) ---
+  (total Course diampu suprayogi: 10002)
+  BD01 | Basis Data
+  PERF00000 | Performance Course 0
+  PERF00001 | Performance Course 1
+  PERF00002 | Performance Course 2
+  PERF00003 | Performance Course 3
+  PERF00004 | Performance Course 4
+  PERF00005 | Performance Course 5
+  PERF00006 | Performance Course 6
+  PERF00007 | Performance Course 7
+  PERF00008 | Performance Course 8
+  ... (10 baris pertama dari 10.002 course)
+
+--- 4b.3 Semua Lesson milik satu Course tertentu (PSS01) ---
+  1. Pengenalan Backend
+  2. Pola Arsitektur Backend
+  3. Containerisasi dengan Docker
+  4. Django Framework & ORM
+  5. Database Optimization
+
+--- 4b.4 Jumlah mahasiswa yang terdaftar pada suatu Course ---
+  BD01 (Basis Data) : 3 mahasiswa
+  PSS01 (Pemrograman Sisi Server) : 3 mahasiswa
+
+--- 4b.5 Semua Assignment milik suatu Course (PSS01) ---
+  Tugas Django ORM | deadline: 2026-11-06 09:28:29.510617+00:00
+
+--- 4b.6 Semua Submission milik suatu Assignment (Tugas Django ORM) ---
+  faishal | nilai: 87.50 | 2026-10-30 09:28:29.516934+00:00

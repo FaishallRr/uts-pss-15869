@@ -1,0 +1,23 @@
+﻿11 objects imported automatically (use -v 2 for details).
+
+=== SOAL 5c ΓÇö Course + Lesson DENGAN prefetch_related('lessons') ===
+Jumlah Course        : 50
+Jumlah Query SQL     : 2 (1 query Course + 1 query Lesson = 2)
+Waktu eksekusi       : 0.0249 detik
+
+Contoh 5 baris hasil:
+  ('PERF00000', 5, ['Materi 1', 'Materi 2', 'Materi 3'])
+  ('PERF00001', 5, ['Materi 1', 'Materi 2', 'Materi 3'])
+  ('PERF00002', 5, ['Materi 1', 'Materi 2', 'Materi 3'])
+  ('PERF00003', 5, ['Materi 1', 'Materi 2', 'Materi 3'])
+  ('PERF00004', 5, ['Materi 1', 'Materi 2', 'Materi 3'])
+  ...
+
+Semua query yang tercatat:
+  SELECT "catalog_course"."id", "catalog_course"."code", "catalog_course"."title", "catalog_course"."description", "catalog_course"."lecturer_id", "catalog_course"."is_active", "catalog_course"."created
+  SELECT "catalog_lesson"."id", "catalog_lesson"."course_id", "catalog_lesson"."title", "catalog_lesson"."content", "catalog_lesson"."order" FROM "catalog_lesson" INNER JOIN "catalog_course" ON ("catalo
+
+=== PERBANDINGAN: TANPA prefetch (BEFORE) ===
+Jumlah Course        : 50
+Jumlah Query SQL     : 51 (1 + 50 = 51, N+1)
+Waktu eksekusi       : 0.0507 detik

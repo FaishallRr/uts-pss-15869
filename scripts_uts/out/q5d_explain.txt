@@ -1,0 +1,13 @@
+﻿11 objects imported automatically (use -v 2 for details).
+
+=== SOAL 5d ΓÇö QuerySet.explain() ===
+
+--- Query 1: filter by code (unique index) ---
+Index Scan using catalog_course_code_e109f879_like on catalog_course  (cost=0.29..8.30 rows=1 width=58)
+  Index Cond: ((code)::text = 'PERF05000'::text)
+
+--- Query 2: filter is_active + title (index composite) ---
+Sort  (cost=8.31..8.32 rows=1 width=58)
+  Sort Key: code
+  ->  Index Scan using catalog_cou_is_acti_d7f8f8_idx on catalog_course  (cost=0.29..8.30 rows=1 width=58)
+        Index Cond: ((is_active = true) AND ((title)::text = 'Performance Course 5000'::text))

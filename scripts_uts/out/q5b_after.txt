@@ -1,0 +1,17 @@
+﻿11 objects imported automatically (use -v 2 for details).
+
+=== SOAL 5b ΓÇö Course + Lecturer DENGAN select_related('lecturer') (AFTER) ===
+Jumlah Course        : 100
+Jumlah Query SQL     : 1
+Waktu eksekusi       : 0.0222 detik
+
+Contoh 5 baris hasil:
+  ('PERF00000', 'Performance Course 0', 'suprayogi')
+  ('PERF00001', 'Performance Course 1', 'suprayogi')
+  ('PERF00002', 'Performance Course 2', 'suprayogi')
+  ('PERF00003', 'Performance Course 3', 'suprayogi')
+  ('PERF00004', 'Performance Course 4', 'suprayogi')
+  ...
+
+Semua query yang tercatat:
+  SELECT "catalog_course"."id", "catalog_course"."code", "catalog_course"."title", "catalog_course"."description", "catalog_course"."lecturer_id", "catalog_course"."is_active", "catalog_course"."created
